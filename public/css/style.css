@@ -1,0 +1,310 @@
+:root{
+  --bg: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --accent: #7c3aed;
+  --card: #f8fafc;
+  --glass: rgba(255,255,255,0.6);
+  --shadow: 0 6px 18px rgba(17,24,39,0.08);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 20px;
+  background:var(--bg);
+  box-shadow: var(--shadow);
+  position:sticky;
+  top:0;
+  z-index:20;
+}
+
+.brand{
+  font-weight:700;
+  font-size:18px;
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+}
+.accent{
+  color:var(--accent);
+  font-weight:800;
+  font-size:14px;
+}
+
+.tabs{display:flex; gap:8px}
+.tab{
+  background:transparent;
+  border:none;
+  padding:8px 12px;
+  cursor:pointer;
+  color:var(--muted);
+  border-radius:8px;
+  transition:all .18s ease;
+}
+.tab:hover{color:var(--text); transform:translateY(-2px)}
+.tab.active{
+  background:linear-gradient(90deg, rgba(124,58,237,0.08), rgba(124,58,237,0.02));
+  color:var(--accent);
+  box-shadow: 0 6px 12px rgba(124,58,237,0.06);
+}
+
+.right{display:flex;align-items:center;gap:12px}
+.btn{
+  background:transparent;
+  border:1px solid rgba(17,24,39,0.06);
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all .12s;
+}
+.btn.primary{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+}
+.btn:hover{transform:translateY(-2px)}
+
+.container{max-width:1000px;margin:28px auto;padding:0 20px}
+
+.page{display:none; opacity:0; transform:translateY(8px); transition:all .25s ease; min-height:320px}
+.page.active{display:block; opacity:1; transform:none}
+
+.siteTitle{color:var(--accent); margin-top:6px}
+.lead{color:var(--muted); line-height:1.6; max-width:70%}
+.muted-note{color:var(--muted); margin-bottom:12px}
+
+.itemsList{
+  display:grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;
+  margin-top:14px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:14px;
+  box-shadow: 0 8px 20px rgba(2,6,23,0.04);
+}
+
+.item{
+  background:#fff;
+  border-radius:10px;
+  padding:12px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  box-shadow: 0 6px 18px rgba(17,24,39,0.04);
+  transition:transform .12s ease, box-shadow .12s;
+}
+.item:hover{transform:translateY(-6px); box-shadow:0 12px 26px rgba(2,6,23,0.06)}
+.item img{width:72px;height:72px;border-radius:8px;object-fit:cover;background:#f3f4f6}
+.item .meta{flex:1}
+.item .meta h4{margin:0 0 6px 0}
+.item .meta p{margin:0;color:var(--muted);font-size:13px}
+.item .actions{display:flex;flex-direction:column;gap:6px}
+.small{font-size:13px;color:var(--muted)}
+
+.notifications{margin-top:14px}
+.notice{
+  background:linear-gradient(90deg, rgba(124,58,237,0.06), rgba(124,58,237,0.02));
+  border-left:4px solid var(--accent);
+  padding:12px;
+  border-radius:8px;
+  color:var(--text);
+  margin-bottom:8px;
+}
+
+.modal{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(2,6,23,0.35);
+  transition:opacity .2s; z-index:60;
+}
+.modal.hidden{display:none}
+.modalContent{
+  background:#fff;padding:18px;border-radius:12px;width:420px; box-shadow:0 20px 50px rgba(2,6,23,0.2);
+}
+
+/* inputs in forms, including modal account inputs */
+.form-inline{display:flex;gap:8px;flex-wrap:wrap}
+.form-inline input,
+.modalContent input,
+#accountForm input{
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid rgba(2,6,23,0.06);
+  background:#fff;
+  font-size:14px;
+  width:100%;
+  transition:box-shadow .12s, transform .08s;
+}
+.modalContent input:focus,
+.form-inline input:focus,
+#accountForm input:focus{
+  outline:none;
+  box-shadow: 0 6px 20px rgba(124,58,237,0.08);
+  transform:translateY(-2px);
+}
+
+/* account modal tab buttons */
+.acctTabs{display:flex;gap:8px;margin:10px 0 6px 0}
+.acctTab{
+  padding:8px 10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);background:transparent;cursor:pointer;color:var(--muted)
+}
+.acctTab.active{
+  background:linear-gradient(90deg, rgba(124,58,237,0.08), rgba(124,58,237,0.02));
+  color:var(--accent);
+  border:none;
+  box-shadow: 0 6px 12px rgba(124,58,237,0.06);
+}
+
+.modalActions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.hidden{display:none}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+
+.adminPanel .card{margin-bottom:12px}
+.adminItem{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border-radius:8px;background:#fff;margin-bottom:8px}
+.adminOrders .order{padding:10px;background:#fff;border-radius:8px;margin-bottom:8px}
+
+.currentUser{font-size:13px;color:var(--muted);margin-right:8px}
+
+/* Admin panel improvements */
+.adminPanel{padding:18px}
+.adminTop{margin-bottom:12px}
+.adminHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.adminActions{display:flex;gap:8px}
+.adminStats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.adminStat{
+  background:linear-gradient(90deg, rgba(124,58,237,0.04), rgba(124,58,237,0.01));
+  border-left:4px solid var(--accent);
+  padding:12px;border-radius:10px;min-width:140px;
+}
+.adminStat .val{font-weight:700;font-size:18px}
+.adminStat .label{font-size:12px;color:var(--muted)}
+
+.adminControls .controlsRow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.controlGroup{display:flex;flex-direction:column;gap:6px}
+.controlGroup input, .controlGroup select{padding:8px 10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);width:220px}
+
+.adminGrid{display:grid;grid-template-columns: 1fr 420px;gap:12px;margin-top:12px}
+.leftCol{min-width:0}
+.rightCol{min-width:0}
+
+/* admin items layout */
+#adminItems .adminItem{align-items:center;display:flex;justify-content:space-between;gap:12px;padding:12px;border-radius:8px;background:#fff;margin-bottom:8px;box-shadow:none}
+.adminItem .meta{flex:1}
+.adminItem .meta .name{font-weight:700}
+.badge{display:inline-block;padding:6px 8px;border-radius:999px;background:#fff;border:1px solid rgba(2,6,23,0.06);font-size:12px;color:var(--muted)}
+.lowStock{background:#fff5f5;border-color:#fca5a5;color:#b91c1c}
+
+/* admin orders */
+#adminOrders .order{padding:12px;border-radius:8px;background:#fff;margin-bottom:8px;display:flex;flex-direction:column;gap:8px}
+.orderTop{display:flex;justify-content:space-between;align-items:center}
+.orderMeta{font-size:13px;color:var(--muted)}
+.orderActions{display:flex;gap:8px;align-items:center}
+.order .small strong{color:var(--accent)}
+
+/* inputs and subtle table look */
+.adminTableHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.inlineInput{padding:8px;border-radius:8px;border:1px solid rgba(2,6,23,0.06)}
+
+/* Dark theme overrides */
+body.dark {
+  --bg: #071021;
+  --text: #e6eef8;
+  --muted: #9fb0c8;
+  --accent: #9b7cff;
+  --card: #071828;
+  --glass: rgba(10,14,20,0.6);
+  --shadow: 0 8px 24px rgba(0,0,0,0.6);
+  background: linear-gradient(180deg, #071021 0%, #071427 100%);
+  color: var(--text);
+}
+
+/* Surface colors */
+body.dark .topbar,
+body.dark .card,
+body.dark .item,
+body.dark .adminItem,
+body.dark .order,
+body.dark .modalContent {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  color: var(--text);
+  border-color: rgba(255,255,255,0.03);
+}
+
+/* Tabs / buttons */
+body.dark .tab { color: var(--muted); }
+body.dark .tab.active {
+  color: var(--accent);
+  box-shadow: 0 6px 12px rgba(155,124,255,0.06);
+}
+body.dark .btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text);
+}
+body.dark .btn.primary { background: var(--accent); color: #081123; border: none; }
+
+/* Notifications and badges */
+body.dark .notice { background: linear-gradient(90deg, rgba(155,124,255,0.06), rgba(155,124,255,0.02)); border-left-color: var(--accent); }
+body.dark .small, body.dark .note { color: var(--muted); }
+
+/* Wishlist / highlights */
+body.dark .wishlistActive { border-color: var(--accent); color: var(--accent); }
+
+/* Keep transitions smooth */
+body, .card, .item, .modalContent { transition: background .18s ease, color .12s ease, box-shadow .12s ease; }
+
+/* Wishlist styles */
+#wishlistList .item { position:relative }
+.wishlistBtn { background:transparent; border:1px solid rgba(17,24,39,0.06); }
+.wishlistActive { border-color:var(--accent); color:var(--accent); }
+
+/* Feedback modal tweaks */
+#feedbackModal .modalContent { width:480px; max-width:95%; }
+#feedbackBtn { margin-left:8px; }
+
+/* Theme toggle */
+#themeToggle { margin-left:8px; }
+
+/* responsive */
+@media (max-width:900px){
+  .adminGrid{grid-template-columns: 1fr; }
+  .controlGroup input, .controlGroup select{width:100%}
+}
+
+/* Fix: ensure hidden overlays / modals don't block touches on mobile */
+.modal.hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Ensure visible modals accept interactions */
+.modal {
+  pointer-events: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Improve touch behavior for interactive controls on mobile */
+button, .btn, input, textarea, select, a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.08);
+  -ms-touch-action: manipulation;
+}
+
+/* If any full-screen elements are accidentally left visible, make sure they don't block clicks */
+body > .blocking-fix {
+  pointer-events: none;
+}

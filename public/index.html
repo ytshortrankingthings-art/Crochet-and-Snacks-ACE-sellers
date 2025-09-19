@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crochet and Snacks ACE sellers</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="topbar" class="topbar">
+    <div class="brand">Crochet and Snacks <span class="accent">ACE sellers</span></div>
+    <nav class="tabs">
+      <button data-tab="home" class="tab active">Home</button>
+      <button data-tab="about" class="tab">About</button>
+      <button data-tab="buy" class="tab">Buy</button>
+      <button data-tab="wishlist" class="tab">Wishlist</button>
+      <button data-tab="employee" class="tab hidden" id="employeeTab">Employee</button>
+    </nav>
+    <div class="right">
+      <div id="userArea" class="userArea">
+        <span id="currentUser" class="currentUser">Not signed in</span>
+        <button id="accountBtn" class="btn">Create / Login</button>
+        <button id="logoutBtn" class="btn hidden">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section id="home" class="page active">
+      <h1>Hello</h1>
+      <h2 class="siteTitle">Crochet and Snacks ACE sellers</h2>
+      <p class="lead">Welcome to our little demo site. We offer small handcrafted items and snacks paired for community events. Use the Buy tab to see items. Create an account using the topbar account button. If you create/login as username <strong>admin</strong> you will get extra admin controls to manage stock and orders.</p>
+      <div id="notifications" class="notifications"></div>
+    </section>
+
+    <section id="about" class="page">
+      <h1>About</h1>
+      <p>We are Crochet and Snacks ACE sellers. We make small crafted items and provide snacks while you browse. This demo site lets you create accounts, place orders, and (if admin) manage items and orders.</p>
+    </section>
+
+    <section id="buy" class="page">
+      <h1>Buy</h1>
+      <div id="itemsList" class="itemsList"></div>
+
+      <div id="myOrdersWrap" class="card" style="margin-top:16px;">
+        <h3>My Orders</h3>
+        <div id="myOrders"></div>
+      </div>
+    </section>
+
+    <section id="wishlist" class="page">
+      <h1>Wishlist</h1>
+      <div id="wishlistList" class="itemsList">
+        <!-- populated by JS -->
+      </div>
+    </section>
+
+    <section id="employee" class="page">
+      <h1>Employee Menu</h1>
+      <div id="employeeMenu"></div>
+    </section>
+
+    <!-- adminPanel is not a "page" so tab switching won't hide it -->
+    <section id="adminPanel" class="adminPanel hidden">
+      <div class="adminTop">
+        <div class="adminHeader">
+          <h1>Admin Panel</h1>
+          <div class="adminActions">
+            <button id="exportOrdersBtn" class="btn">Export Orders CSV</button>
+            <button id="refreshAdminBtn" class="btn">Refresh</button>
+          </div>
+        </div>
+
+        <div class="adminStats" id="adminStats">
+          <!-- populated by JS: total items, active, low-stock, orders, revenue -->
+        </div>
+
+        <div class="adminControls card">
+          <div class="controlsRow">
+            <div class="controlGroup">
+              <label>Search</label>
+              <input id="adminSearch" placeholder="Search items or orders..." />
+            </div>
+            <div class="controlGroup">
+              <label>Order Filter</label>
+              <select id="adminOrderFilter">
+                <option value="all">All</option>
+                <option value="processing">Processing</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="canceled">Canceled</option>
+              </select>
+            </div>
+            <div class="controlGroup">
+              <label>Low stock threshold</label>
+              <input id="lowStockThreshold" type="number" min="0" value="3" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="adminGrid">
+        <div class="leftCol">
+          <div class="card">
+            <h3>Create Item</h3>
+            <form id="createItemForm" class="form-inline">
+              <input name="name" placeholder="Name" required />
+              <input name="price" placeholder="Price" type="number" step="0.01" />
+              <input name="stock" placeholder="Stock" type="number" />
+              <input name="image" placeholder="Image URL (optional)" />
+              <button class="btn primary" type="submit">Create</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3>Items (Manage)</h3>
+            <div id="adminItems"></div>
+          </div>
+        </div>
+
+        <div class="rightCol">
+          <div class="card">
+            <h3>Orders</h3>
+            <div id="adminOrders"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Feedback Modal -->
+  <div id="feedbackModal" class="modal hidden">
+    <div class="modalContent">
+      <h3>Send Feedback</h3>
+      <form id="feedbackForm">
+        <textarea id="feedbackText" placeholder="Tell us what you'd like..." rows="6" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06)"></textarea>
+        <div class="modalActions">
+          <button type="submit" class="btn primary">Send</button>
+          <button type="button" id="closeFeedback" class="btn">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Account Modal -->
+  <div id="accountModal" class="modal hidden">
+    <div class="modalContent">
+      <h3>Create / Login Account</h3>
+
+      <div class="acctTabs" role="tablist">
+        <button type="button" class="acctTab active" data-mode="login">Login</button>
+        <button type="button" class="acctTab" data-mode="create">Create</button>
+      </div>
+
+      <form id="accountForm">
+        <input id="acctUsername" name="username" placeholder="Username (e.g., alice or admin)" required />
+        <input id="acctPassword" name="password" type="password" placeholder="Password" required />
+        <input id="acctFullName" name="fullName" placeholder="Full name (required to create)" class="hidden" />
+        <div class="modalActions">
+          <button type="submit" class="btn primary">Use Account</button>
+          <button type="button" id="closeAcct" class="btn">Close</button>
+        </div>
+      </form>
+
+      <p class="note">If account exists you'll be logged in (password required). To create an account choose "Create" and provide full name and password.</p>
+    </div>
+  </div>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

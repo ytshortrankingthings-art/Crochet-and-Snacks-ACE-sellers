@@ -1,0 +1,101 @@
+{
+  "accounts": [
+    {
+      "username": "admin",
+      "fullName": "Admin",
+      "createdAt": "2025-09-19T00:45:06.289Z",
+      "isAdmin": true,
+      "passwordHash": "$2b$10$tS6oWG60AofhJ6oZFDODYO.uOTaxNDXKmvOJYilocFFFjMDtQL2WS"
+    },
+    {
+      "username": "admi",
+      "fullName": "Admin",
+      "createdAt": "2025-09-19T00:55:42.335Z",
+      "isAdmin": false,
+      "passwordHash": "$2b$10$DSElAXUCwPHAZtzuGordmuN9ucXALOFt4qk1oj7TXuzc5iYMx8YCe"
+    },
+    {
+      "username": "employee1",
+      "fullName": "Employee One",
+      "createdAt": "2025-09-19T01:00:00.000Z",
+      "isAdmin": false,
+      "role": "employee",
+      "passwordHash": "$2b$10$QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6"
+    },
+    {
+      "username": "employee2",
+      "fullName": "Employee Two",
+      "createdAt": "2025-09-19T01:00:00.000Z",
+      "isAdmin": false,
+      "role": "employee",
+      "passwordHash": "$2b$10$QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6"
+    }
+  ],
+  "items": [
+    {
+      "id": 1,
+      "name": "Demo Crochet Bookmark",
+      "description": "Handcrafted crochet bookmark — colorful and lightweight.",
+      "price": 3.5,
+      "stock": 10,
+      "image": "",
+      "active": false,
+      "createdAt": "2025-09-19T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Snack Pack (Small)",
+      "description": "A small snack pack for school events.",
+      "price": 2,
+      "stock": 20,
+      "image": "",
+      "active": false,
+      "createdAt": "2025-09-19T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "Mini Takis Bag",
+      "description": "",
+      "price": 1,
+      "stock": 0,
+      "image": "https://i.postimg.cc/zXpt8B4t/download.jpg",
+      "active": true,
+      "createdAt": "2025-09-19T00:47:44.651Z"
+    },
+    {
+      "id": 4,
+      "name": "Can of Soda (Random)",
+      "description": "",
+      "price": 1,
+      "stock": 1,
+      "image": "https://i.postimg.cc/tCf63G6R/images.jpg",
+      "active": true,
+      "createdAt": "2025-09-19T00:49:31.074Z"
+    },
+    {
+      "id": 5,
+      "name": "Admin Panel (Can change price of items and take down items and manage stock)",
+      "description": "",
+      "price": 60,
+      "stock": 1,
+      "image": "https://i.postimg.cc/LXY56nyz/Screenshot-2025-09-18-7-53-10-PM.png",
+      "active": false,
+      "createdAt": "2025-09-19T00:54:31.624Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "itemId": 4,
+      "itemName": "Can of Soda (Random)",
+      "username": "admi",
+      "buyerName": "Admin",
+      "quantity": 1,
+      "amount": 1,
+      "status": "canceled",
+      "arrivalDate": "2025-09-30T19:56",
+      "createdAt": "2025-09-19T00:56:34.887Z",
+      "canceledAt": "2025-09-19T01:34:40.666Z"
+    }
+  ]
+}
