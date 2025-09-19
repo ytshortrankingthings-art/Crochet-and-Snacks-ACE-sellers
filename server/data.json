@@ -20,7 +20,7 @@
       "createdAt": "2025-09-19T01:00:00.000Z",
       "isAdmin": false,
       "role": "employee",
-      "passwordHash": "$2b$10$QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6"
+      "passwordHash": "$2b$10$u1.tpJ/LFeADM6F3sNqf/u1VWTxmEO7KzCe3qTSl6E02HBN2NQmtG"
     },
     {
       "username": "employee2",
@@ -28,7 +28,7 @@
       "createdAt": "2025-09-19T01:00:00.000Z",
       "isAdmin": false,
       "role": "employee",
-      "passwordHash": "$2b$10$QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6b8QwK8w6"
+      "passwordHash": "$2b$10$p3.v1Z/0.UEwDUXvvm0xQ.FBpBmzwV4Xsf88sSsnCqhCZCh8zz6Ei"
     }
   ],
   "items": [

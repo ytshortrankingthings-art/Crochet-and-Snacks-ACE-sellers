@@ -23,7 +23,8 @@ const state = {
   items: [],
   orders: [],
   acctMode: 'login', // 'login' or 'create'
-  pollHandle: null
+  pollHandle: null,
+  wishlist: [] // track current wishlist (server-backed for signed-in users, local for guests)
 };
 
 // ---- Helpers ----
@@ -107,15 +108,22 @@ function setUser(username, password, fullName) {
     }
   }
 
-  // fetch fresh data immediately on account change
-  fetchItems().catch(()=>{});
-  fetchOrders().catch(()=>{});
+  // load appropriate wishlist source and then refresh items/orders
+  loadWishlistForCurrentUser().then(() => {
+    // refresh UI after wishlist load
+    fetchItems().catch(()=>{});
+    fetchOrders().catch(()=>{});
+  }).catch(() => {
+    fetchItems().catch(()=>{});
+    fetchOrders().catch(()=>{});
+  });
 }
 
 function logout() {
   state.currentUser = null;
   state.currentPassword = null;
   state.currentFullName = null;
+  state.wishlist = loadWishlist(); // load local wishlist
   localStorage.removeItem('cs_user');
   localStorage.removeItem('cs_pass');
   localStorage.removeItem('cs_fullname');
@@ -124,6 +132,9 @@ function logout() {
   if (logoutBtn) logoutBtn.classList.add('hidden');
   hideAdminPanel();
   showNotification('Logged out');
+  // rerender wishlist/items
+  renderItems();
+  if (typeof renderWishlist === 'function') renderWishlist();
 }
 
 function renderUser() {
@@ -151,18 +162,65 @@ function removeGuestOrderId(id) {
   localStorage.setItem(GUEST_ORDERS_KEY, JSON.stringify(arr));
 }
 
-// ---- Wishlist helpers (added) ----
+// ---- Wishlist helpers (modified) ----
+// loadWishlist returns array synchronously for rendering (uses state.wishlist when available)
 function loadWishlist() {
+  // if signed in and not guest, state.wishlist will be populated by loadWishlistForCurrentUser()
+  if (state.currentUser && state.currentUser.toLowerCase() !== 'guest') {
+    return Array.isArray(state.wishlist) ? state.wishlist.map(Number) : [];
+  }
+  // guest => localStorage
   try { return JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]').map(x => Number(x)); }
   catch (e) { return []; }
 }
 function saveWishlist(arr) {
+  // save to localStorage for guest only
+  if (state.currentUser && state.currentUser.toLowerCase() !== 'guest') {
+    // for signed-in users, persist via server API (async) — caller should use saveWishlistServer
+    state.wishlist = Array.isArray(arr) ? arr.map(Number) : [];
+    return;
+  }
   try { localStorage.setItem(WISHLIST_KEY, JSON.stringify((arr||[]).map(x => Number(x)))); }
   catch (e) { /* ignore */ }
 }
-function toggleWishlist(id) {
+
+// toggleWishlist: route to server for signed-in users, localStorage for guests
+async function toggleWishlist(id) {
   if (id === undefined || id === null) return;
   const numId = Number(id);
+
+  if (state.currentUser && state.currentUser.toLowerCase() !== 'guest') {
+    // server-backed wishlist
+    try {
+      const list = Array.isArray(state.wishlist) ? state.wishlist.slice() : [];
+      const idx = list.indexOf(numId);
+      if (idx === -1) {
+        list.push(numId);
+        showNotification('Added to wishlist');
+      } else {
+        list.splice(idx, 1);
+        showNotification('Removed from wishlist');
+      }
+      // save to server
+      const res = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ username: state.currentUser, password: state.currentPassword || '', wishlist: list })
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed');
+      state.wishlist = json.wishlist || [];
+      // re-render UI
+      renderItems();
+      if (typeof renderWishlist === 'function') renderWishlist();
+    } catch (e) {
+      showNotification('Wishlist update failed: ' + (e.message || e));
+      console.error('toggleWishlist server error', e);
+    }
+    return;
+  }
+
+  // guest local flow
   const list = loadWishlist();
   const idx = list.indexOf(numId);
   if (idx === -1) {
@@ -173,12 +231,52 @@ function toggleWishlist(id) {
     showNotification('Removed from wishlist');
   }
   saveWishlist(list);
-  // update UI if functions exist
+  // update UI
   try {
     renderItems();
     if (typeof renderWishlist === 'function') renderWishlist();
   } catch (e) {
     console.error('toggleWishlist error', e);
+  }
+}
+
+// ---- Wishlist server sync helpers (added) ----
+async function loadWishlistForCurrentUser() {
+  // sets state.wishlist appropriately
+  if (!state.currentUser || state.currentUser.toLowerCase() === 'guest') {
+    state.wishlist = loadWishlist(); // local
+    return state.wishlist;
+  }
+  try {
+    const q = new URLSearchParams({ username: state.currentUser });
+    if (state.currentPassword) q.set('password', state.currentPassword);
+    const res = await fetch('/api/wishlist?' + q.toString());
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Failed to load wishlist');
+    // merge localStorage wishlist into server wishlist if local has items
+    const local = (function(){ try { return JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]').map(Number); } catch(e){ return []; } })() || [];
+    const serverList = Array.isArray(json.wishlist) ? json.wishlist.map(Number) : [];
+    const merged = Array.from(new Set([ ...(serverList||[]), ...(local||[]) ]));
+    // if merged differs from serverList, save it back
+    if (merged.length !== serverList.length || merged.some((v,i)=>serverList.indexOf(v)===-1)) {
+      const saveRes = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ username: state.currentUser, password: state.currentPassword || '', wishlist: merged })
+      });
+      const saveJson = await saveRes.json().catch(()=>({}));
+      if (!saveRes.ok) console.warn('Failed to merge wishlist to server', saveJson);
+      state.wishlist = (saveJson && Array.isArray(saveJson.wishlist)) ? saveJson.wishlist.map(Number) : merged;
+      // clear local wishlist after merging to server
+      try { localStorage.removeItem(WISHLIST_KEY); } catch(e){}
+    } else {
+      state.wishlist = serverList;
+    }
+    return state.wishlist;
+  } catch (e) {
+    console.error('loadWishlistForCurrentUser error', e);
+    state.wishlist = [];
+    return state.wishlist;
   }
 }
 
@@ -232,7 +330,9 @@ async function fetchItems() {
   try {
     const data = await api('/items');
     state.items = data.items || [];
+    // ensure wishlist view is updated when items change
     renderItems();
+    if (typeof renderWishlist === 'function') renderWishlist();
     renderAdminItems();
     renderMyOrders();
   } catch (err) {
@@ -380,11 +480,11 @@ function initAccount() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Account error');
 
+      // setUser will now load/merge wishlist from local into server and then refresh items
       setUser(json.account.username, password, json.account.fullName || fullName || null);
       el('#accountModal').classList.add('hidden');
       showNotification(`Signed in as ${json.account.username}`);
-      await fetchItems();
-      await fetchOrders();
+      // fetchItems/fetchOrders are triggered after wishlist load inside setUser
     } catch (err) {
       showNotification('Account error: ' + err.message);
     }
@@ -898,6 +998,10 @@ function initTabs() {
         fetchOrders();
         renderMyOrders();
       }
+      // show wishlist when wishlist tab selected
+      if (tab === 'wishlist') {
+        if (typeof renderWishlist === 'function') renderWishlist();
+      }
     });
   });
 }
@@ -972,3 +1076,69 @@ async function boot() {
 }
 
 boot();
+
+// ---- Wishlist rendering (added) ----
+function renderWishlist() {
+  const container = el('#wishlistList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // load wishlist ids (from state for signed-in users, localStorage for guests)
+  const ids = loadWishlist();
+  if (!ids || !ids.length) {
+    container.innerHTML = '<div class="card"><div class="small">No items in your wishlist.</div></div>';
+    return;
+  }
+
+  // map items by id for quick lookup
+  const itemsById = (state.items || []).reduce((m, it) => { m[it.id] = it; return m; }, {});
+
+  ids.forEach(id => {
+    const item = itemsById[Number(id)];
+    const node = document.createElement('div');
+    node.className = 'item';
+    if (!item) {
+      // item removed on server
+      node.innerHTML = `
+        <img src="https://via.placeholder.com/96?text=Missing" alt="Missing item" />
+        <div class="meta">
+          <h4>Item #${escapeHtml(id)}</h4>
+          <p class="small">This item is no longer available.</p>
+        </div>
+        <div class="actions">
+          <button class="btn removeWish" data-id="${id}">Remove</button>
+        </div>
+      `;
+      container.appendChild(node);
+      return;
+    }
+
+    const outOfStock = item.stock <= 0;
+    node.innerHTML = `
+      <img src="${escapeHtml(item.image || 'https://via.placeholder.com/96?text=No+Image')}" alt="${escapeHtml(item.name)}" />
+      <div class="meta">
+        <h4>${escapeHtml(item.name)}</h4>
+        <p>${escapeHtml(item.description || 'No description')}</p>
+        <div class="small">Price: $${Number(item.price).toFixed(2)} • Stock: ${item.stock}</div>
+      </div>
+      <div class="actions">
+        <button class="btn buyBtn" data-id="${item.id}" ${outOfStock ? 'disabled' : ''}>Buy</button>
+        <button class="btn removeWish wishlistBtn wishlistActive" data-id="${item.id}">Remove</button>
+      </div>
+    `;
+    container.appendChild(node);
+  });
+
+  // bind actions
+  container.querySelectorAll('.buyBtn').forEach(b => {
+    b.removeEventListener && b.removeEventListener('click', onBuyClick);
+    b.addEventListener('click', onBuyClick);
+  });
+  container.querySelectorAll('.removeWish').forEach(b => {
+    b.addEventListener('click', (ev) => {
+      const id = ev.currentTarget.dataset.id;
+      // toggleWishlist handles server/local based on currentUser
+      toggleWishlist(id);
+    });
+  });
+}

@@ -58,11 +58,21 @@ function nextId(array) {
     let changed = false;
     data.accounts.forEach(acc => {
       if (acc && acc.role === 'employee') {
-        // If no passwordHash or it doesn't look like a bcrypt hash, initialize it to "employee"
-        if (!acc.passwordHash || typeof acc.passwordHash !== 'string' || !acc.passwordHash.startsWith('$2')) {
+        try {
+          // If missing or not a bcrypt-style string, re-initialize
+          if (!acc.passwordHash || typeof acc.passwordHash !== 'string' || !acc.passwordHash.startsWith('$2')) {
+            throw new Error('invalid-hash-format');
+          }
+          // If the hash exists but does not verify against default "employee" (likely placeholder), re-init.
+          // Use try/catch because compareSync can throw on malformed hashes.
+          const ok = bcrypt.compareSync('employee', acc.passwordHash);
+          if (!ok) throw new Error('hash-does-not-verify');
+          // if ok, leave as-is (may be a real custom password or already default)
+        } catch (err) {
+          // initialize to default "employee"
           acc.passwordHash = bcrypt.hashSync('employee', 10);
           changed = true;
-          console.log(`Initialized password for employee account: ${acc.username}`);
+          console.log(`Initialized/normalized password for employee account: ${acc.username}`);
         }
       }
     });
@@ -325,6 +335,48 @@ app.post('/api/admin/takedown-item', (req, res) => {
 
   saveData(data);
   res.json({ success: true, canceledOrders: canceledCount });
+});
+
+// Add helper to check general user credentials (not only admin)
+function checkUserCredentials(username, password) {
+  if (!username || !password) return false;
+  const data = loadData();
+  const acc = data.accounts.find(a => a.username && a.username.toLowerCase() === username.toLowerCase());
+  if (!acc || !acc.passwordHash) return false;
+  return bcrypt.compareSync(password, acc.passwordHash);
+}
+
+// Get wishlist for a user (requires username & password for non-guest)
+app.get('/api/wishlist', (req, res) => {
+  const username = (req.query.username || '').toString();
+  const password = (req.query.password || '').toString();
+  if (!username || username.toLowerCase() === 'guest') {
+    // Guests use client-side localStorage
+    return res.json({ wishlist: [] });
+  }
+  if (!checkUserCredentials(username, password)) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  const data = loadData();
+  const acc = data.accounts.find(a => a.username && a.username.toLowerCase() === username.toLowerCase());
+  res.json({ wishlist: acc && Array.isArray(acc.wishlist) ? acc.wishlist : [] });
+});
+
+// Save wishlist for user (body: { username, password, wishlist: [ids] })
+app.post('/api/wishlist', (req, res) => {
+  const { username, password, wishlist } = req.body || {};
+  if (!username || username.toLowerCase() === 'guest') {
+    return res.status(400).json({ error: 'Invalid username for server-side wishlist' });
+  }
+  if (!checkUserCredentials(username, password)) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  const data = loadData();
+  const acc = data.accounts.find(a => a.username && a.username.toLowerCase() === username.toLowerCase());
+  if (!acc) return res.status(400).json({ error: 'Account not found' });
+  acc.wishlist = Array.from(new Set((Array.isArray(wishlist) ? wishlist.map(n => Number(n)) : [])));
+  saveData(data);
+  res.json({ wishlist: acc.wishlist });
 });
 
 // fallback to index.html for SPA routing
