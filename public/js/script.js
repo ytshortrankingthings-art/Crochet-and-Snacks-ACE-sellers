@@ -151,6 +151,67 @@ function removeGuestOrderId(id) {
   localStorage.setItem(GUEST_ORDERS_KEY, JSON.stringify(arr));
 }
 
+// ---- Wishlist helpers (added) ----
+function loadWishlist() {
+  try { return JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]').map(x => Number(x)); }
+  catch (e) { return []; }
+}
+function saveWishlist(arr) {
+  try { localStorage.setItem(WISHLIST_KEY, JSON.stringify((arr||[]).map(x => Number(x)))); }
+  catch (e) { /* ignore */ }
+}
+function toggleWishlist(id) {
+  if (id === undefined || id === null) return;
+  const numId = Number(id);
+  const list = loadWishlist();
+  const idx = list.indexOf(numId);
+  if (idx === -1) {
+    list.push(numId);
+    showNotification('Added to wishlist');
+  } else {
+    list.splice(idx, 1);
+    showNotification('Removed from wishlist');
+  }
+  saveWishlist(list);
+  // update UI if functions exist
+  try {
+    renderItems();
+    if (typeof renderWishlist === 'function') renderWishlist();
+  } catch (e) {
+    console.error('toggleWishlist error', e);
+  }
+}
+
+// ---- Receipt helper (added) ----
+function downloadReceipt(ord) {
+  try {
+    if (!ord || !ord.id) return;
+    const lines = [
+      `Receipt - Order #${ord.id}`,
+      `Item: ${ord.itemName || ''}`,
+      `Quantity: ${ord.quantity || 1}`,
+      `Amount: $${Number(ord.amount || 0).toFixed(2)}`,
+      `Buyer: ${ord.buyerName || ord.username || 'guest'}`,
+      `Status: ${ord.status || ''}`,
+      `Created: ${ord.createdAt || ''}`,
+      `Arrival: ${ord.arrivalDate || ''}`,
+      '',
+      'Thank you for your purchase!'
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt_order_${ord.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('downloadReceipt error', e);
+  }
+}
+
 // ---- Polling ----
 function startPolling() {
   if (state.pollHandle) clearInterval(state.pollHandle);
@@ -788,6 +849,36 @@ function initCreateItem() {
   });
 }
 
+// Add missing feedback initializer so boot() doesn't throw when calling initFeedback()
+function initFeedback() {
+  try {
+    const openBtn = document.getElementById('feedbackBtn'); // optional trigger
+    const modal = document.getElementById('feedbackModal');
+    const form = document.getElementById('feedbackForm');
+    const closeBtn = document.getElementById('closeFeedback');
+
+    if (openBtn && modal) {
+      openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    }
+
+    if (closeBtn && modal) {
+      closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    }
+
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const txt = (document.getElementById('feedbackText') || {}).value || '';
+        showNotification('Thank you for your feedback!', true);
+        if (modal) modal.classList.add('hidden');
+        form.reset();
+      });
+    }
+  } catch (e) {
+    console.error('initFeedback error', e);
+  }
+}
+
 // ---- Tabs, bootstrapping ----
 function initTabs() {
   els('.tab').forEach(t => {
@@ -798,7 +889,10 @@ function initTabs() {
       els('.page').forEach(p => p.classList.remove('active'));
       const target = el('#' + tab);
       if (target) target.classList.add('active');
-+     if (tab === 'employee') renderEmployeeMenu();
+      // Fix: remove stray '+' and guard optional function
+      if (tab === 'employee') {
+        if (typeof renderEmployeeMenu === 'function') renderEmployeeMenu();
+      }
       if (tab === 'buy') {
         fetchItems();
         fetchOrders();
@@ -870,8 +964,8 @@ async function boot() {
   initTabs();
   initAccount();
   initCreateItem();
-  initAdminControls();
   initFeedback();
+  initAdminControls();
   await fetchItems();
   await fetchOrders();
   startPolling();

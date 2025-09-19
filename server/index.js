@@ -50,6 +50,28 @@ function nextId(array) {
   }
 })();
 
+// New: ensure employees have a password hash (default "employee") so employee1/employee2 can log in.
+// This fixes "Invalid password for account" for employee accounts created in data.json without a valid bcrypt hash.
+(function ensureEmployeePasswords() {
+  try {
+    const data = loadData();
+    let changed = false;
+    data.accounts.forEach(acc => {
+      if (acc && acc.role === 'employee') {
+        // If no passwordHash or it doesn't look like a bcrypt hash, initialize it to "employee"
+        if (!acc.passwordHash || typeof acc.passwordHash !== 'string' || !acc.passwordHash.startsWith('$2')) {
+          acc.passwordHash = bcrypt.hashSync('employee', 10);
+          changed = true;
+          console.log(`Initialized password for employee account: ${acc.username}`);
+        }
+      }
+    });
+    if (changed) saveData(data);
+  } catch (e) {
+    console.error('Failed to initialize employee passwords', e);
+  }
+})();
+
 // API routes
 
 app.get('/api/items', (req, res) => {
